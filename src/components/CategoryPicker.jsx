@@ -25,7 +25,7 @@ export default function CategoryPicker({ value, onChange, categories, onCreated,
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter') { e.preventDefault(); if (draft.trim()) create(); }
-            if (e.key === 'Escape') setDraft(null);
+            if (e.key === 'Escape') { e.preventDefault(); setDraft(null); }
           }} />
         <button type="button" className="btn btn-primary" disabled={!draft.trim()} onClick={create}>Add</button>
         <button type="button" className="btn btn-ghost" onClick={() => setDraft(null)}>Cancel</button>

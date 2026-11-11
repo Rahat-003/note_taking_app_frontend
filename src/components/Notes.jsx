@@ -1,18 +1,75 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { api, fmtDate, splitList } from '../api.js';
 import { useList, usePaginated } from '../hooks.js';
 import CategoryPicker from './CategoryPicker.jsx';
-import Dropdown from './Dropdown.jsx';
-import NoteFilters, { NO_FILTERS, STATUS_OPTIONS, isFiltered, useNotesQuery } from './NoteFilters.jsx';
+import { ArchiveIcon, UnarchiveIcon } from './icons.jsx';
+import NoteFilters, { NO_FILTERS, isFiltered, useNotesQuery } from './NoteFilters.jsx';
+import NoteModal from './NoteModal.jsx';
+import Toast from './Toast.jsx';
 import Pager, { EmptyRow } from './Pager.jsx';
 
-const EMPTY = { id: '', title: '', content: '', status: 'active', category_id: '', tags: '' };
+const EMPTY = { title: '', content: '', category_id: '', tags: '' };
+
+// Admins see everyone's notes, archived ones included (dimmed), unless they filter.
+const ALL_NOTES_DEFAULTS = { ...NO_FILTERS, isArchived: 'all' };
+
+function emptyMessage(filters, defaults, fallback) {
+  if (filters.isArchived === 'true' && !filters.q.trim() && !filters.category_id && !filters.tag_id) return 'No archived notes.';
+  return isFiltered(filters, defaults) ? 'No notes match these filters.' : fallback;
+}
+
+/** Archive / unarchive a note; returns the toast offering Undo. */
+function useArchiving(onChanged, onError) {
+  const [toast, setToast] = useState(null);
+  const dismiss = useCallback(() => setToast(null), []);
+
+  async function setArchived(note, isArchived, undoable = true) {
+    try {
+      await api(`/notes/${note._id}`, { method: 'PATCH', body: { isArchived } });
+      onChanged();
+      setToast(undoable
+        ? { message: `“${note.title}” ${isArchived ? 'archived' : 'moved out of the archive'}`, undo: () => setArchived(note, !isArchived, false) }
+        : null);
+    } catch (err) { onError(err.message); }
+  }
+
+  const toastElement = toast && (
+    <Toast message={toast.message} actionLabel="Undo" onAction={toast.undo} onDismiss={dismiss} />
+  );
+  return { setArchived, toastElement };
+}
+
+function ArchiveButton({ note, onArchive }) {
+  return (
+    <button type="button" className="btn btn-sm btn-with-icon" title={note.isArchived ? 'Move out of the archive' : 'Archive this note'}
+      onClick={() => onArchive(note, !note.isArchived)}>
+      {note.isArchived ? <><UnarchiveIcon />Unarchive</> : <><ArchiveIcon />Archive</>}
+    </button>
+  );
+}
+
+// Clicking anywhere on a row opens the note, except on the row's own buttons (tags, category, actions).
+// The title button gets focus first, so it gets focus back when the modal closes.
+const openFromRow = (open) => (e) => {
+  if (e.target.closest('button, a, input')) return;
+  e.currentTarget.querySelector('.note-title')?.focus();
+  open();
+};
+
+function TitleCell({ note, onOpen, onTag }) {
+  return (
+    <td>
+      <button type="button" className="note-title" onClick={onOpen}>{note.title}</button>
+      <NoteMeta note={note} onTag={onTag} />
+    </td>
+  );
+}
 
 // Status and tags under a note's title; clicking a tag filters by it.
 function NoteMeta({ note, onTag }) {
   return (
     <div className="note-meta">
-      {note.status === 'archived' && <span className="badge">archived</span>}
+      {note.isArchived && <span className="badge badge-archived">archived</span>}
       {note.tags?.map((t) => (
         <button key={t._id} type="button" className="chip chip-toggle" title={`Show notes tagged “${t.name}”`} onClick={() => onTag(t._id)}>
           #{t.name}
@@ -49,56 +106,45 @@ export function MyNotes({ onError }) {
   const myCategories = useList('/categories/mine', onError); // filters: the categories my notes use, with counts
   const myTags = useList('/tags/mine', onError);
   const [form, setForm] = useState(EMPTY);
+  const [open, setOpen] = useState(null); // { note, editing } shown in the modal
   const set = (key) => (e) => setForm({ ...form, [key]: e.target.value });
 
   const reloadLabels = () => Promise.all([myCategories.reload(), myTags.reload()]);
 
-  async function save(e) {
+  async function create(e) {
     e.preventDefault();
     try {
-      const body = { title: form.title, content: form.content, status: form.status, category_id: form.category_id, tags: splitList(form.tags) };
-      if (form.id) await api(`/notes/${form.id}`, { method: 'PATCH', body });
-      else await api('/notes', { method: 'POST', body });
+      await api('/notes', { method: 'POST', body: { ...form, tags: splitList(form.tags) } });
       setForm(EMPTY);
-      if (form.id) reload();
-      else reloadFirstPage();
+      reloadFirstPage();
       reloadLabels();
     } catch (err) { onError(err.message); }
   }
 
-  async function remove(id) {
-    try {
-      await api(`/notes/${id}`, { method: 'DELETE' });
-      if (form.id === id) setForm(EMPTY);
-      reload();
-      reloadLabels();
-    } catch (err) { onError(err.message); }
+  function onModalChanged() {
+    reload();
+    reloadLabels();
   }
 
-  const edit = (n) => setForm({
-    id: n._id, title: n.title, content: n.content || '', status: n.status,
-    category_id: n.category_id || '', tags: (n.tags || []).map((t) => t.name).join(', '),
-  });
+  const { setArchived, toastElement } = useArchiving(onModalChanged, onError);
 
   return (
     <>
       <section className="card">
         <div className="card-header">
-          <h2>{form.id ? 'Edit note' : 'New note'}</h2>
+          <h2>New note</h2>
+          <span className="card-subtitle">Click a note below to open, edit or delete it</span>
         </div>
-        <form className="form" onSubmit={save}>
+        <form className="form" onSubmit={create}>
           <input placeholder="Title" required value={form.title} onChange={set('title')} />
           <textarea placeholder="Write something…" value={form.content} onChange={set('content')} />
           <div className="form-grid">
-            <Dropdown label="Note status" prefix="Status" value={form.status} options={STATUS_OPTIONS}
-              onChange={(status) => setForm({ ...form, status })} />
             <CategoryPicker value={form.category_id} categories={allCategories.items} onError={onError}
               onCreated={allCategories.reload} onChange={(category_id) => setForm((f) => ({ ...f, category_id }))} />
             <input placeholder="Tags, comma separated" value={form.tags} onChange={set('tags')} />
           </div>
           <div className="form-actions">
-            <button className="btn btn-primary">{form.id ? 'Save changes' : 'Add note'}</button>
-            {form.id && <button type="button" className="btn btn-ghost" onClick={() => setForm(EMPTY)}>Cancel</button>}
+            <button className="btn btn-primary">Add note</button>
           </div>
         </form>
       </section>
@@ -114,21 +160,19 @@ export function MyNotes({ onError }) {
             <thead><tr><th>Title</th><th>Category</th><th>Content</th><th>Created</th><th></th></tr></thead>
             <tbody>
               {result?.data.length === 0 && (
-                <EmptyRow colSpan={5}>{isFiltered(filters) ? 'No notes match these filters.' : 'No notes yet. Add your first one above.'}</EmptyRow>
+                <EmptyRow colSpan={5}>{emptyMessage(filters, NO_FILTERS, 'No notes yet. Add your first one above.')}</EmptyRow>
               )}
               {result?.data.map((n) => (
-                <tr key={n._id} className={n.status === 'archived' ? 'row-muted' : ''}>
-                  <td>
-                    <div className="cell-title">{n.title}</div>
-                    <NoteMeta note={n} onTag={(tag_id) => setFilters({ ...filters, tag_id })} />
-                  </td>
+                <tr key={n._id} className={`row-clickable ${n.isArchived ? 'row-muted' : ''}`}
+                  onClick={openFromRow(() => setOpen({ note: n, editing: false }))}>
+                  <TitleCell note={n} onOpen={() => setOpen({ note: n, editing: false })} onTag={(tag_id) => setFilters({ ...filters, tag_id })} />
                   <CategoryCell note={n} onCategory={(category_id) => setFilters({ ...filters, category_id })} />
                   <td><div className="clamp">{n.content}</div></td>
                   <Dates note={n} />
                   <td>
                     <div className="row-actions">
-                      <button className="btn btn-sm" onClick={() => edit(n)}>Edit</button>
-                      <button className="btn btn-sm btn-danger" onClick={() => remove(n._id)}>Delete</button>
+                      <button className="btn btn-sm" onClick={() => setOpen({ note: n, editing: true })}>Edit</button>
+                      <ArchiveButton note={n} onArchive={setArchived} />
                     </div>
                   </td>
                 </tr>
@@ -138,33 +182,40 @@ export function MyNotes({ onError }) {
         </div>
         <Pager result={result} setPage={setPage} />
       </section>
+
+      {open && (
+        <NoteModal key={open.note._id} note={open.note} canEdit startEditing={open.editing} categories={allCategories.items}
+          onCategoryCreated={allCategories.reload} onChanged={onModalChanged} onArchive={setArchived}
+          onClose={() => setOpen(null)} onError={onError} />
+      )}
+      {toastElement}
     </>
   );
 }
 
-export function AllNotes({ onError }) {
-  const [filters, setFilters] = useState(NO_FILTERS);
-  const { result, setPage } = usePaginated(useNotesQuery(filters, { all: 'true' }), onError);
+export function AllNotes({ onError, currentUserId }) {
+  const [filters, setFilters] = useState(ALL_NOTES_DEFAULTS);
+  const { result, setPage, reload } = usePaginated(useNotesQuery(filters, { all: 'true' }), onError);
   const categories = useList('/categories', onError);
   const tags = useList('/tags', onError);
+  const [open, setOpen] = useState(null);
+  const { setArchived, toastElement } = useArchiving(reload, onError);
   return (
     <section className="card">
       <div className="card-header">
         <h2>Everyone's notes</h2>
         <span className="card-subtitle">Admin view · all users{result ? ` · ${result.total} notes` : ''}</span>
       </div>
-      <NoteFilters filters={filters} onChange={setFilters} categories={categories.items} tags={tags.items} />
+      <NoteFilters filters={filters} onChange={setFilters} categories={categories.items} tags={tags.items} defaults={ALL_NOTES_DEFAULTS} />
       <div className="table-wrap">
         <table>
           <thead><tr><th>Title</th><th>Category</th><th>Content</th><th>Owner</th><th>Created</th></tr></thead>
           <tbody>
-            {result?.data.length === 0 && <EmptyRow colSpan={5}>{isFiltered(filters) ? 'No notes match these filters.' : 'No notes yet.'}</EmptyRow>}
+            {result?.data.length === 0 && <EmptyRow colSpan={5}>{emptyMessage(filters, ALL_NOTES_DEFAULTS, 'No notes yet.')}</EmptyRow>}
             {result?.data.map((n) => (
-              <tr key={n._id} className={n.status === 'archived' ? 'row-muted' : ''}>
-                <td>
-                  <div className="cell-title">{n.title}</div>
-                  <NoteMeta note={n} onTag={(tag_id) => setFilters({ ...filters, tag_id })} />
-                </td>
+              <tr key={n._id} className={`row-clickable ${n.isArchived ? 'row-muted' : ''}`}
+                onClick={openFromRow(() => setOpen(n))}>
+                <TitleCell note={n} onOpen={() => setOpen(n)} onTag={(tag_id) => setFilters({ ...filters, tag_id })} />
                 <CategoryCell note={n} onCategory={(category_id) => setFilters({ ...filters, category_id })} />
                 <td><div className="clamp">{n.content}</div></td>
                 <td>
@@ -177,6 +228,13 @@ export function AllNotes({ onError }) {
         </table>
       </div>
       <Pager result={result} setPage={setPage} />
+
+      {open && (
+        // The API lets you edit only your own notes; everyone else's open read-only.
+        <NoteModal key={open._id} note={open} canEdit={open.user_id === currentUserId} categories={categories.items}
+          onCategoryCreated={categories.reload} onChanged={reload} onArchive={setArchived} onClose={() => setOpen(null)} onError={onError} />
+      )}
+      {toastElement}
     </section>
   );
 }

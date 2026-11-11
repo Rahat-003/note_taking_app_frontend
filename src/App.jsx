@@ -118,7 +118,7 @@ export default function App() {
         {current === 'profile' && (
           <Profile user={user} onUpdated={(u) => setSession({ ...session, user: u })} onError={onError} />
         )}
-        {current === 'all-notes' && <AllNotes onError={onError} />}
+        {current === 'all-notes' && <AllNotes onError={onError} currentUserId={user._id} />}
         {current === 'users' && (
           <Users onError={onError} onViewPosts={viewPosts} currentUserId={user._id} canManage={can('users.manage')} />
         )}

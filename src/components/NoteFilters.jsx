@@ -1,17 +1,14 @@
 import { useDebouncedValue } from '../hooks.js';
 import Dropdown from './Dropdown.jsx';
-import { ArrowDownIcon, ArrowUpIcon, ClockIcon, Dot, FolderIcon, HashIcon, HistoryIcon, LayersIcon, SearchIcon } from './icons.jsx';
+import { ArchiveIcon, ArrowDownIcon, ArrowUpIcon, ClockIcon, FolderIcon, HashIcon, HistoryIcon, InboxIcon, LayersIcon, SearchIcon } from './icons.jsx';
 
-export const NO_FILTERS = { q: '', status: '', category_id: '', tag_id: '', sort: 'createdAt:desc' };
+/** isArchived: 'false' (not archived, the API default), 'true' (the archive) or 'all'. */
+export const NO_FILTERS = { q: '', isArchived: 'false', category_id: '', tag_id: '', sort: 'createdAt:desc' };
 
-export const STATUS_OPTIONS = [
-  { value: 'active', label: 'Active', description: 'In use and shown normally', icon: <Dot tone="success" /> },
-  { value: 'archived', label: 'Archived', description: 'Kept, but out of the way', icon: <Dot tone="warning" /> },
-];
-
-const STATUS_FILTER_OPTIONS = [
-  { value: '', label: 'Any status', description: 'Active and archived', icon: <LayersIcon /> },
-  ...STATUS_OPTIONS,
+const ARCHIVE_OPTIONS = [
+  { value: 'false', label: 'Active notes', description: 'Everything not archived', icon: <InboxIcon /> },
+  { value: 'true', label: 'Archived', description: 'Notes you put away', icon: <ArchiveIcon /> },
+  { value: 'all', label: 'All notes', description: 'Active and archived', icon: <LayersIcon /> },
 ];
 
 const SORT_OPTIONS = [
@@ -32,7 +29,7 @@ export function useNotesQuery(filters, base = {}) {
   const debounced = useDebouncedValue(filters);
   const [sort, order] = debounced.sort.split(':');
   const params = new URLSearchParams(base);
-  for (const key of ['q', 'status', 'category_id', 'tag_id']) {
+  for (const key of ['q', 'isArchived', 'category_id', 'tag_id']) {
     const value = debounced[key].trim();
     if (value) params.set(key, value);
   }
@@ -41,10 +38,15 @@ export function useNotesQuery(filters, base = {}) {
   return `/notes?${params}`;
 }
 
-export const isFiltered = (f) => Boolean(f.q.trim() || f.status || f.category_id || f.tag_id);
+/** True when anything beyond the view's default archive setting narrows the list. */
+export const isFiltered = (f, defaults = NO_FILTERS) =>
+  Boolean(f.q.trim() || f.category_id || f.tag_id || f.isArchived !== defaults.isArchived);
 
-/** categories / tags: [{ _id, name, noteCount? }] offered in the category and tag filters. */
-export default function NoteFilters({ filters, onChange, categories, tags }) {
+/**
+ * categories / tags: [{ _id, name, noteCount? }] offered in the category and tag filters.
+ * defaults: the view's starting filters (Clear goes back to them).
+ */
+export default function NoteFilters({ filters, onChange, categories, tags, defaults = NO_FILTERS }) {
   const choose = (key) => (value) => onChange({ ...filters, [key]: value });
   return (
     <div className="toolbar">
@@ -53,7 +55,7 @@ export default function NoteFilters({ filters, onChange, categories, tags }) {
         <input type="search" placeholder="Search title and content…" aria-label="Search notes" value={filters.q}
           onChange={(e) => onChange({ ...filters, q: e.target.value })} />
       </label>
-      <Dropdown label="Filter by status" value={filters.status} options={STATUS_FILTER_OPTIONS} onChange={choose('status')} />
+      <Dropdown label="Show" value={filters.isArchived} options={ARCHIVE_OPTIONS} onChange={choose('isArchived')} />
       <Dropdown label="Filter by category" value={filters.category_id} onChange={choose('category_id')}
         className={filters.category_id ? '' : 'dropdown-placeholder'}
         options={[{ value: '', label: 'Any category', short: 'Category', icon: <FolderIcon /> }, ...labelOptions(categories, <FolderIcon />)]} />
@@ -61,8 +63,8 @@ export default function NoteFilters({ filters, onChange, categories, tags }) {
         className={filters.tag_id ? '' : 'dropdown-placeholder'}
         options={[{ value: '', label: 'Any tag', short: 'Tag', icon: <HashIcon /> }, ...labelOptions(tags, <HashIcon />)]} />
       <Dropdown className="dropdown-sort" label="Sort notes" prefix="Sort" value={filters.sort} options={SORT_OPTIONS} onChange={choose('sort')} />
-      {isFiltered(filters) && (
-        <button type="button" className="btn btn-ghost" onClick={() => onChange({ ...NO_FILTERS, sort: filters.sort })}>Clear</button>
+      {isFiltered(filters, defaults) && (
+        <button type="button" className="btn btn-ghost" onClick={() => onChange({ ...defaults, sort: filters.sort })}>Clear</button>
       )}
     </div>
   );
