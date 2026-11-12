@@ -23,6 +23,8 @@ export const TrashIcon = (p) => <Svg {...p}><path d="M4 7h16M10 11v6M14 11v6M6 7
 export const ArchiveIcon = (p) => <Svg {...p}><rect x="3" y="4" width="18" height="4" rx="1" /><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8M10 12h4" /></Svg>;
 export const UnarchiveIcon = (p) => <Svg {...p}><rect x="3" y="4" width="18" height="4" rx="1" /><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8M12 17v-6M9.5 13.5 12 11l2.5 2.5" /></Svg>;
 export const InboxIcon = (p) => <Svg {...p}><path d="M3 13h5l1.5 3h5L16 13h5" /><path d="M5 5h14l2 8v6H3v-6l2-8Z" /></Svg>;
+export const PinIcon = (p) => <Svg {...p}><path d="M12 17v5M9 3h6l-1 6 3 3v2H7v-2l3-3-1-6Z" /></Svg>;
+export const PinOffIcon = (p) => <Svg {...p}><path d="M12 17v5M9 3h6l-1 6 3 3v2H7v-2l3-3-1-6Z" /><path d="M3 3l18 18" /></Svg>;
 export const SearchIcon = (p) => <Svg {...p}><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></Svg>;
 
 /** A coloured status dot. */

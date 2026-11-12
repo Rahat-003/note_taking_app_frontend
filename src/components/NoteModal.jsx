@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { api, fmtDate, splitList } from '../api.js';
 import CategoryPicker from './CategoryPicker.jsx';
 import Modal from './Modal.jsx';
-import { ArchiveIcon, PencilIcon, TrashIcon, UnarchiveIcon } from './icons.jsx';
+import { ArchiveIcon, PencilIcon, PinIcon, PinOffIcon, TrashIcon, UnarchiveIcon } from './icons.jsx';
 
 const toForm = (n) => ({
   title: n.title,
@@ -86,6 +86,14 @@ export default function NoteModal({ note: initial, canEdit, startEditing = false
     }
   }
 
+  async function togglePin() {
+    try {
+      const updated = await api(`/notes/${note._id}`, { method: 'PATCH', body: { pinned: !note.pinned_at } });
+      setNote(updated);
+      onChanged();
+    } catch (err) { setError(err.message); }
+  }
+
   async function remove() {
     setBusy(true);
     try {
@@ -146,6 +154,11 @@ export default function NoteModal({ note: initial, canEdit, startEditing = false
             {note.isArchived ? <><UnarchiveIcon />Unarchive</> : <><ArchiveIcon />Archive</>}
           </button>
         )}
+        {canEdit && !note.isArchived && (
+          <button type="button" className="btn btn-with-icon" aria-pressed={Boolean(note.pinned_at)} onClick={togglePin}>
+            {note.pinned_at ? <><PinOffIcon />Unpin</> : <><PinIcon />Pin</>}
+          </button>
+        )}
         <span className="modal-spacer" />
         <button type="button" className="btn btn-ghost" onClick={onClose}>Close</button>
         {canEdit && <button type="button" className="btn btn-primary btn-with-icon" autoFocus onClick={startEdit}><PencilIcon />Edit</button>}
@@ -180,6 +193,7 @@ export default function NoteModal({ note: initial, canEdit, startEditing = false
             {note.isArchived
               ? <span className="badge badge-archived">archived</span>
               : <span className="badge badge-active">active</span>}
+            {note.pinned_at && <span className="badge badge-pinned"><PinIcon /> pinned {fmtDate(note.pinned_at)}</span>}
             {note.category && <span className="badge badge-category">{note.category.name}</span>}
             {note.tags?.map((t) => <span key={t._id} className="chip">#{t.name}</span>)}
           </div>

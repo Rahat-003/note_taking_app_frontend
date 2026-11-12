@@ -355,6 +355,16 @@ tbody tr:hover td { background: var(--surface-2); }
 }
 .modal-textarea { min-height: 220px; max-height: 45vh; }
 .badge-active { background: color-mix(in srgb, var(--success) 14%, transparent); color: var(--success); border-color: transparent; }
+.badge-pinned { display: inline-flex; align-items: center; gap: 4px; background: var(--primary-soft); color: var(--primary); border-color: transparent; }
+.pin-marker { color: var(--primary); margin-right: 6px; vertical-align: -2px; }
+.btn-icon-sm { display: inline-grid; place-items: center; padding: 4px 7px; line-height: 0; }
+.btn-pinned { color: var(--primary); border-color: color-mix(in srgb, var(--primary) 40%, var(--border)); background: var(--primary-soft); }
+.group-row td {
+  padding: 8px 12px 6px; background: var(--surface); cursor: default;
+  font-size: .72rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted);
+}
+.group-row td svg { vertical-align: -2px; }
+tbody tr.group-row:hover td { background: var(--surface); }
 .badge-archived { background: color-mix(in srgb, var(--warning) 16%, transparent); color: var(--warning); border-color: transparent; }
 
 /* ---------- toast (components/Toast.jsx) ---------- */

@@ -1,8 +1,8 @@
-import { useCallback, useState } from 'react';
+import { Fragment, useCallback, useState } from 'react';
 import { api, fmtDate, splitList } from '../api.js';
 import { useList, usePaginated } from '../hooks.js';
 import CategoryPicker from './CategoryPicker.jsx';
-import { ArchiveIcon, UnarchiveIcon } from './icons.jsx';
+import { ArchiveIcon, PinIcon, PinOffIcon, UnarchiveIcon } from './icons.jsx';
 import NoteFilters, { NO_FILTERS, isFiltered, useNotesQuery } from './NoteFilters.jsx';
 import NoteModal from './NoteModal.jsx';
 import Toast from './Toast.jsx';
@@ -59,9 +59,40 @@ const openFromRow = (open) => (e) => {
 function TitleCell({ note, onOpen, onTag }) {
   return (
     <td>
+      {note.pinned_at && <PinIcon className="pin-marker" aria-label="Pinned" role="img" />}
       <button type="button" className="note-title" onClick={onOpen}>{note.title}</button>
       <NoteMeta note={note} onTag={onTag} />
     </td>
+  );
+}
+
+// Pinning applies to the active list; archived notes are never pinned (archiving unpins).
+async function setPinned(note, pinned, onChanged, onError) {
+  try {
+    await api(`/notes/${note._id}`, { method: 'PATCH', body: { pinned } });
+    onChanged();
+  } catch (err) { onError(err.message); }
+}
+
+function PinButton({ note, onPin }) {
+  const pinned = Boolean(note.pinned_at);
+  return (
+    <button type="button" className={`btn btn-sm btn-icon-sm ${pinned ? 'btn-pinned' : ''}`} aria-pressed={pinned}
+      aria-label={pinned ? 'Unpin note' : 'Pin note'} title={pinned ? 'Unpin' : 'Pin to the top'} onClick={() => onPin(note, !pinned)}>
+      {pinned ? <PinOffIcon /> : <PinIcon />}
+    </button>
+  );
+}
+
+/** A "Pinned" / "Others" heading row before each group, when the page has pinned notes. */
+function GroupRow({ notes, index, colSpan }) {
+  const pinned = Boolean(notes[index].pinned_at);
+  const startsGroup = index === 0 || pinned !== Boolean(notes[index - 1].pinned_at);
+  if (!startsGroup || !notes.some((n) => n.pinned_at)) return null;
+  return (
+    <tr className="group-row">
+      <td colSpan={colSpan}>{pinned ? <><PinIcon /> Pinned</> : 'Others'}</td>
+    </tr>
   );
 }
 
@@ -127,6 +158,7 @@ export function MyNotes({ onError }) {
   }
 
   const { setArchived, toastElement } = useArchiving(onModalChanged, onError);
+  const pin = (note, pinned) => setPinned(note, pinned, onModalChanged, onError);
 
   return (
     <>
@@ -162,8 +194,10 @@ export function MyNotes({ onError }) {
               {result?.data.length === 0 && (
                 <EmptyRow colSpan={5}>{emptyMessage(filters, NO_FILTERS, 'No notes yet. Add your first one above.')}</EmptyRow>
               )}
-              {result?.data.map((n) => (
-                <tr key={n._id} className={`row-clickable ${n.isArchived ? 'row-muted' : ''}`}
+              {result?.data.map((n, i) => (
+                <Fragment key={n._id}>
+                <GroupRow notes={result.data} index={i} colSpan={5} />
+                <tr className={`row-clickable ${n.isArchived ? 'row-muted' : ''}`}
                   onClick={openFromRow(() => setOpen({ note: n, editing: false }))}>
                   <TitleCell note={n} onOpen={() => setOpen({ note: n, editing: false })} onTag={(tag_id) => setFilters({ ...filters, tag_id })} />
                   <CategoryCell note={n} onCategory={(category_id) => setFilters({ ...filters, category_id })} />
@@ -171,11 +205,13 @@ export function MyNotes({ onError }) {
                   <Dates note={n} />
                   <td>
                     <div className="row-actions">
+                      {!n.isArchived && <PinButton note={n} onPin={pin} />}
                       <button className="btn btn-sm" onClick={() => setOpen({ note: n, editing: true })}>Edit</button>
                       <ArchiveButton note={n} onArchive={setArchived} />
                     </div>
                   </td>
                 </tr>
+                </Fragment>
               ))}
             </tbody>
           </table>
