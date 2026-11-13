@@ -7,6 +7,7 @@ import NoteFilters, { NO_FILTERS, isFiltered, useNotesQuery } from './NoteFilter
 import NoteModal from './NoteModal.jsx';
 import Toast from './Toast.jsx';
 import Pager, { EmptyRow } from './Pager.jsx';
+import UserPicker from './UserPicker.jsx';
 
 const EMPTY = { title: '', content: '', category_id: '', tags: '' };
 
@@ -272,9 +273,10 @@ export function AllNotes({ onError, currentUserId }) {
     <section className="card">
       <div className="card-header">
         <h2>Everyone's notes</h2>
-        <span className="card-subtitle">Admin view · all users{result ? ` · ${result.total} notes` : ''}</span>
+        <span className="card-subtitle">Admin view · {filters.user ? filters.user.name : 'all users'}{result ? ` · ${result.total} notes` : ''}</span>
       </div>
-      <NoteFilters filters={filters} onChange={setFilters} categories={categories.items} tags={tags.items} defaults={ALL_NOTES_DEFAULTS} />
+      <NoteFilters filters={filters} onChange={setFilters} categories={categories.items} tags={tags.items} defaults={ALL_NOTES_DEFAULTS}
+        userFilter={<UserPicker value={filters.user} onChange={(user) => setFilters({ ...filters, user })} onError={onError} />} />
       <div className="table-wrap">
         <table className="notes-table">
           <thead><tr><th>Title</th><th>Category</th><th>Content</th><th>Owner</th><th>Created</th></tr></thead>
@@ -287,7 +289,14 @@ export function AllNotes({ onError, currentUserId }) {
                 <CategoryCell note={n} onCategory={(category_id) => setFilters({ ...filters, category_id })} />
                 <td><div className="clamp">{n.content}</div></td>
                 <td>
-                  {n.user ? <>{n.user.name}<div className="cell-muted">{n.user.email}</div></> : <span className="cell-muted">(deleted)</span>}
+                  {n.user
+                    ? (
+                      <button type="button" className="owner-button" title={`Show only ${n.user.name}'s notes`}
+                        onClick={() => setFilters({ ...filters, user: n.user })}>
+                        <span className="owner-name">{n.user.name}</span><div className="cell-muted">{n.user.email}</div>
+                      </button>
+                    )
+                    : <span className="cell-muted">(deleted)</span>}
                 </td>
                 <Dates note={n} />
               </tr>

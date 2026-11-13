@@ -3,7 +3,8 @@ import Dropdown from './Dropdown.jsx';
 import { ArchiveIcon, ArrowDownIcon, ArrowUpIcon, ClockIcon, FolderIcon, HashIcon, HistoryIcon, InboxIcon, LayersIcon, SearchIcon } from './icons.jsx';
 
 /** isArchived: 'false' (not archived, the API default), 'true' (the archive) or 'all'. */
-export const NO_FILTERS = { q: '', isArchived: 'false', category_id: '', tag_id: '', sort: 'createdAt:desc' };
+// user: { _id, name, email } or null, the admin's "filter by user" (sent as user_id).
+export const NO_FILTERS = { q: '', isArchived: 'false', category_id: '', tag_id: '', user: null, sort: 'createdAt:desc' };
 
 const ARCHIVE_OPTIONS = [
   { value: 'false', label: 'Active notes', description: 'Everything not archived', icon: <InboxIcon /> },
@@ -33,6 +34,7 @@ export function useNotesQuery(filters, base = {}) {
     const value = debounced[key].trim();
     if (value) params.set(key, value);
   }
+  if (debounced.user) params.set('user_id', debounced.user._id);
   params.set('sort', sort);
   params.set('order', order);
   return `/notes?${params}`;
@@ -40,13 +42,14 @@ export function useNotesQuery(filters, base = {}) {
 
 /** True when anything beyond the view's default archive setting narrows the list. */
 export const isFiltered = (f, defaults = NO_FILTERS) =>
-  Boolean(f.q.trim() || f.category_id || f.tag_id || f.isArchived !== defaults.isArchived);
+  Boolean(f.q.trim() || f.category_id || f.tag_id || f.user || f.isArchived !== defaults.isArchived);
 
 /**
  * categories / tags: [{ _id, name, noteCount? }] offered in the category and tag filters.
  * defaults: the view's starting filters (Clear goes back to them).
+ * userFilter: shown after the search box when given (the admin's user picker).
  */
-export default function NoteFilters({ filters, onChange, categories, tags, defaults = NO_FILTERS }) {
+export default function NoteFilters({ filters, onChange, categories, tags, defaults = NO_FILTERS, userFilter = null }) {
   const choose = (key) => (value) => onChange({ ...filters, [key]: value });
   return (
     <div className="toolbar">
@@ -55,6 +58,7 @@ export default function NoteFilters({ filters, onChange, categories, tags, defau
         <input type="search" placeholder="Search title and content…" aria-label="Search notes" value={filters.q}
           onChange={(e) => onChange({ ...filters, q: e.target.value })} />
       </label>
+      {userFilter}
       <Dropdown label="Show" value={filters.isArchived} options={ARCHIVE_OPTIONS} onChange={choose('isArchived')} />
       <Dropdown label="Filter by category" value={filters.category_id} onChange={choose('category_id')}
         className={filters.category_id ? '' : 'dropdown-placeholder'}

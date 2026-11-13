@@ -459,3 +459,12 @@ code { font-size: .85rem; font-family: ui-monospace, SFMono-Regular, Menlo, mono
 /* ---------- notes tables ---------- */
 .notes-table th { text-align: center; }
 .notes-table tr.row-clickable td { padding-top: 18px; padding-bottom: 18px; vertical-align: middle; }
+
+/* ---------- user picker (components/UserPicker.jsx) ---------- */
+.toolbar > .user-picker { flex: 1.2 1 170px; }
+.user-picker-menu { width: 300px; max-height: none; overflow: visible; display: grid; gap: 6px; }
+.user-picker-search > input { width: 100%; }
+.user-picker-list { list-style: none; margin: 0; padding: 0; max-height: 280px; overflow-y: auto; }
+.user-picker-empty { padding: 8px 10px; color: var(--muted); font-size: .85rem; }
+.owner-button { font: inherit; color: inherit; background: none; border: 0; padding: 0; text-align: left; cursor: pointer; }
+.owner-button:hover .owner-name, .owner-button:focus-visible .owner-name { color: var(--primary); text-decoration: underline; }

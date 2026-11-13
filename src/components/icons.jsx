@@ -29,3 +29,4 @@ export const SearchIcon = (p) => <Svg {...p}><circle cx="11" cy="11" r="7" /><pa
 
 /** A coloured status dot. */
 export const Dot = ({ tone }) => <span className={`dot dot-${tone}`} aria-hidden="true" />;
+export const UserIcon = (p) => <Svg {...p}><circle cx="12" cy="8" r="4" /><path d="M4 20a8 8 0 0 1 16 0" /></Svg>;
