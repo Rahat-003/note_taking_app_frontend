@@ -8,6 +8,7 @@ import NoteModal from './NoteModal.jsx';
 import Toast from './Toast.jsx';
 import Pager, { EmptyRow } from './Pager.jsx';
 import UserPicker from './UserPicker.jsx';
+import ErrorAlert, { FieldError, invalidProps } from './ErrorAlert.jsx';
 
 const EMPTY = { title: '', content: '', category_id: '', tags: '' };
 
@@ -31,7 +32,7 @@ function useArchiving(onChanged, onError) {
       setToast(undoable
         ? { message: `“${note.title}” ${isArchived ? 'archived' : 'moved out of the archive'}`, undo: () => setArchived(note, !isArchived, false) }
         : null);
-    } catch (err) { onError(err.message); }
+    } catch (err) { onError(err); }
   }
 
   const toastElement = toast && (
@@ -60,7 +61,7 @@ function DeleteButton({ note, onDeleted, onError }) {
       await api(`/notes/${note._id}`, { method: 'DELETE' });
       onDeleted();
     } catch (err) {
-      onError(err.message);
+      onError(err);
       setBusy(false);
       setConfirming(false);
     }
@@ -104,7 +105,7 @@ async function setPinned(note, pinned, onChanged, onError) {
   try {
     await api(`/notes/${note._id}`, { method: 'PATCH', body: { pinned } });
     onChanged();
-  } catch (err) { onError(err.message); }
+  } catch (err) { onError(err); }
 }
 
 function PinButton({ note, onPin }) {
@@ -169,6 +170,7 @@ export function MyNotes({ onError }) {
   const myCategories = useList('/categories/mine', onError); // filters: the categories my notes use, with counts
   const myTags = useList('/tags/mine', onError);
   const [form, setForm] = useState(EMPTY);
+  const [formError, setFormError] = useState(null); // shown in the New note card, next to the fields
   const [open, setOpen] = useState(null); // { note, editing } shown in the modal
   const set = (key) => (e) => setForm({ ...form, [key]: e.target.value });
 
@@ -179,9 +181,10 @@ export function MyNotes({ onError }) {
     try {
       await api('/notes', { method: 'POST', body: { ...form, tags: splitList(form.tags) } });
       setForm(EMPTY);
+      setFormError(null);
       reloadFirstPage();
       reloadLabels();
-    } catch (err) { onError(err.message); }
+    } catch (err) { setFormError(err); }
   }
 
   function onModalChanged() {
@@ -200,8 +203,12 @@ export function MyNotes({ onError }) {
           <span className="card-subtitle">Click a note below to open, edit or delete it</span>
         </div>
         <form className="form" onSubmit={create}>
-          <input placeholder="Title" required value={form.title} onChange={set('title')} />
-          <textarea placeholder="Write something…" value={form.content} onChange={set('content')} />
+          <ErrorAlert error={formError} onDismiss={() => setFormError(null)} />
+          <input placeholder="Title" aria-label="Title" required value={form.title} onChange={set('title')} {...invalidProps(formError, 'title', 'new-title-error')} />
+          <FieldError error={formError} field="title" id="new-title-error" />
+          <textarea placeholder="Write something…" aria-label="Content" value={form.content} onChange={set('content')}
+            {...invalidProps(formError, 'content', 'new-content-error')} />
+          <FieldError error={formError} field="content" id="new-content-error" />
           <div className="form-grid">
             <CategoryPicker value={form.category_id} categories={allCategories.items} onError={onError}
               onCreated={allCategories.reload} onChange={(category_id) => setForm((f) => ({ ...f, category_id }))} />

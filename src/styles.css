@@ -12,6 +12,9 @@
   --danger-soft: #fff0f6;
   --success: #2b8a3e;
   --warning: #e67700;
+  --warning-soft: #fff4e6;
+  --info: #1c7ed6;
+  --info-soft: #e7f5ff;
   --radius: 10px;
   --shadow-pop: 0 16px 40px -12px rgba(16, 24, 40, 0.28), 0 4px 10px -4px rgba(16, 24, 40, 0.12);
   --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.08);
@@ -33,6 +36,9 @@
     --danger-soft: #2b1621;
     --success: #69db7c;
     --warning: #ffc078;
+    --warning-soft: #2b2113;
+    --info: #74c0fc;
+    --info-soft: #152434;
     --shadow: none;
     --shadow-pop: 0 18px 44px -10px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.03);
     color-scheme: dark;
@@ -468,3 +474,108 @@ code { font-size: .85rem; font-family: ui-monospace, SFMono-Regular, Menlo, mono
 .user-picker-empty { padding: 8px 10px; color: var(--muted); font-size: .85rem; }
 .owner-button { font: inherit; color: inherit; background: none; border: 0; padding: 0; text-align: left; cursor: pointer; }
 .owner-button:hover .owner-name, .owner-button:focus-visible .owner-name { color: var(--primary); text-decoration: underline; }
+
+/* ---------- error callouts (components/ErrorAlert.jsx) ---------- */
+.error-alert {
+  --tone: var(--danger); --tone-soft: var(--danger-soft);
+  display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: start;
+  padding: 14px 16px; border-radius: 12px;
+  background: var(--tone-soft); color: var(--text);
+  border: 1px solid color-mix(in srgb, var(--tone) 35%, transparent);
+  border-left: 4px solid var(--tone);
+  box-shadow: var(--shadow);
+  animation: error-in .22s cubic-bezier(.2, .8, .3, 1.2);
+}
+.error-alert-warning { --tone: var(--warning); --tone-soft: var(--warning-soft); }
+.error-alert-info { --tone: var(--info); --tone-soft: var(--info-soft); }
+.error-alert-icon {
+  display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%;
+  font-size: 1.1rem; color: var(--tone); background: color-mix(in srgb, var(--tone) 16%, transparent);
+}
+.error-alert-body { display: grid; gap: 4px; min-width: 0; padding-top: 1px; }
+.error-alert-title { color: var(--tone); font-size: .95rem; }
+.error-alert-message, .error-alert-hint { margin: 0; font-size: .9rem; overflow-wrap: anywhere; }
+.error-alert-hint { color: var(--muted); font-size: .85rem; }
+.error-alert-permission {
+  font-size: .8rem; padding: 1px 6px; border-radius: 6px;
+  background: color-mix(in srgb, var(--tone) 14%, transparent); color: var(--tone);
+}
+.error-alert-fields { margin: 4px 0 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: .88rem; }
+.error-alert-fields li { display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline; }
+.error-alert-fields li::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--tone); align-self: center; }
+.error-alert-field { font-weight: 600; }
+.error-alert-close { color: var(--muted); padding: 4px 6px; }
+@keyframes error-in {
+  from { opacity: 0; transform: translateY(-6px) scale(.98); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) { .error-alert { animation: none; } }
+
+/* inline field errors */
+.field-error { display: inline-flex; align-items: center; gap: 6px; color: var(--danger); font-size: .8rem; font-weight: 500; animation: error-in .18s ease-out; }
+input[aria-invalid="true"], textarea[aria-invalid="true"] {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 18%, transparent);
+}
+
+/* the app-wide error floats in the top-right corner, over whatever was clicked */
+.app-error {
+  position: fixed; z-index: 60; top: 16px; right: 16px;
+  width: min(440px, calc(100vw - 32px));
+  box-shadow: var(--shadow-pop);
+  background: color-mix(in srgb, var(--tone-soft) 92%, var(--surface));
+}
+
+/* ---------- profile (components/Profile.jsx) ---------- */
+.profile { display: grid; gap: 16px; }
+.profile-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); align-items: start; }
+.profile-hero { gap: 12px; }
+.profile-identity { display: grid; gap: 4px; min-width: 0; }
+.profile-identity h2 { margin: 0; font-size: 1.35rem; }
+.profile-sub { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: var(--muted); font-size: .9rem; }
+.profile-bio { margin: 0; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; max-width: 72ch; }
+.profile-empty { color: var(--muted); font-style: italic; }
+.chip-interest {
+  background: var(--primary-soft); border-color: color-mix(in srgb, var(--primary) 30%, transparent);
+  color: inherit; font-weight: 500;
+}
+.with-icon { display: inline-flex; align-items: center; gap: 8px; }
+h2.with-icon svg { color: var(--primary); }
+.field-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.char-count { font-weight: 400; font-size: .78rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.char-count.over { color: var(--danger); font-weight: 600; }
+
+/* interests as removable chips with an inline input */
+.tag-input {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  padding: 6px 8px; min-height: 42px;
+  border: 1px solid var(--border); border-radius: 8px; background: var(--surface);
+  font-weight: 400;
+}
+.tag-input:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+.tag-input.invalid { border-color: var(--danger); }
+.tag-input > input { flex: 1 1 140px; border: 0; padding: 4px; min-width: 0; background: transparent; box-shadow: none; }
+.tag-input > input:focus { box-shadow: none; outline: none; }
+.chip-removable { display: inline-flex; align-items: center; gap: 4px; padding-right: 4px; animation: error-in .16s ease-out; }
+.chip-removable button {
+  display: grid; place-items: center; width: 18px; height: 18px; padding: 0;
+  border: 0; border-radius: 50%; background: transparent; color: var(--muted); cursor: pointer; font-size: .75rem;
+}
+.chip-removable button:hover { background: var(--danger-soft); color: var(--danger); }
+
+/* password strength + match feedback */
+.strength { display: flex; align-items: center; gap: 10px; font-size: .78rem; font-weight: 600; color: var(--muted); }
+.strength-bar { flex: 1; height: 6px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); overflow: hidden; }
+.strength-bar > span { display: block; height: 100%; border-radius: inherit; background: var(--danger); transition: width .25s ease, background .25s ease; }
+.strength-2 .strength-bar > span { background: var(--warning); }
+.strength-3 .strength-bar > span, .strength-4 .strength-bar > span { background: var(--success); }
+.strength-1, .strength-0 { color: var(--danger); }
+.strength-2 { color: var(--warning); }
+.strength-3, .strength-4 { color: var(--success); }
+.field-ok { color: var(--success); font-size: .8rem; font-weight: 500; }
+.success-callout {
+  display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 12px;
+  background: color-mix(in srgb, var(--success) 12%, var(--surface)); color: var(--success);
+  border: 1px solid color-mix(in srgb, var(--success) 35%, transparent); border-left: 4px solid var(--success);
+  font-size: .9rem; font-weight: 500; animation: error-in .22s ease-out;
+}

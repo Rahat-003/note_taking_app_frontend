@@ -17,7 +17,7 @@ export function usePaginated(path, onError, limit = 10) {
       if (!res.data.length && page > 1) return setPage(Math.max(1, res.totalPages));
       setResult(res);
     } catch (err) {
-      onError(err.message);
+      onError(err);
     }
   }, [path, page, limit, onError, setPage]);
 
@@ -46,7 +46,7 @@ export function useList(path, onError) {
     try {
       setItems((await api(`${path}?limit=100`)).data);
     } catch (err) {
-      onError(err.message);
+      onError(err);
     }
   }, [path, onError]);
   useEffect(() => { reload(); }, [reload]);

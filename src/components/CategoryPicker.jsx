@@ -15,7 +15,7 @@ export default function CategoryPicker({ value, onChange, categories, onCreated,
       await onCreated();
       onChange(category._id);
       setDraft(null);
-    } catch (err) { onError(err.message); }
+    } catch (err) { onError(err); }
   }
 
   if (draft !== null) {

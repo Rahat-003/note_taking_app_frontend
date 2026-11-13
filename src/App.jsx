@@ -7,6 +7,7 @@ import Profile from './components/Profile.jsx';
 import Users from './components/Users.jsx';
 import Interests from './components/Interests.jsx';
 import Roles from './components/Roles.jsx';
+import ErrorAlert from './components/ErrorAlert.jsx';
 import { navigate, usePath } from './router.jsx';
 
 const AUTH_PAGES = ['/login', '/register'];
@@ -26,7 +27,7 @@ export default function App() {
   const [session, setSession] = useState(null); // { user, permissions }
   const [loading, setLoading] = useState(Boolean(getToken()));
   const [tab, setTab] = useState(null);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null); // ApiError | string, shown as a floating callout
   const path = usePath();
 
   const logout = useCallback(() => {
@@ -53,16 +54,23 @@ export default function App() {
     if (session && AUTH_PAGES.includes(path)) navigate('/', { replace: true });
   }, [loading, session, path]);
 
-  const onError = useCallback((msg) => setError(msg), []);
+  const onError = useCallback((err) => setError(err), []);
+
+  // Errors float over the page (so they are seen wherever the action was) and fade after a while.
+  useEffect(() => {
+    if (!error) return undefined;
+    const timer = setTimeout(() => setError(null), error.fields?.length ? 15000 : 9000);
+    return () => clearTimeout(timer);
+  }, [error]);
 
   function onAuth({ token, user, permissions }) {
     setToken(token);
     setSession({ user, permissions });
-    setError('');
+    setError(null);
   }
 
   function selectTab(id) {
-    setError('');
+    setError(null);
     setTab(id);
   }
 
@@ -96,12 +104,7 @@ export default function App() {
       </header>
 
       <main className="container">
-        {error && (
-          <div className="alert" role="alert">
-            <span>{error}</span>
-            <button className="btn btn-sm btn-ghost" onClick={() => setError('')} aria-label="Dismiss">✕</button>
-          </div>
-        )}
+        {error && <ErrorAlert className="app-error" error={error} onDismiss={() => setError(null)} />}
 
         {current === 'notes' && <MyNotes onError={onError} />}
         {current === 'archive' && <ArchivedNotes onError={onError} />}

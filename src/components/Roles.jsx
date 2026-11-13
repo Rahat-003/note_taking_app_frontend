@@ -11,7 +11,7 @@ export default function Roles({ onError, myPermissions, onChanged }) {
   const [form, setForm] = useState(EMPTY);
 
   useEffect(() => {
-    api('/permissions?limit=100').then((res) => setCatalog(res.data)).catch((err) => onError(err.message));
+    api('/permissions?limit=100').then((res) => setCatalog(res.data)).catch((err) => onError(err));
   }, [onError]);
 
   const isAdminRole = form.system && form.name === 'admin';
@@ -31,7 +31,7 @@ export default function Roles({ onError, myPermissions, onChanged }) {
       setForm(EMPTY);
       reload();
       onChanged();
-    } catch (err) { onError(err.message); }
+    } catch (err) { onError(err); }
   }
 
   async function remove(id) {
@@ -39,7 +39,7 @@ export default function Roles({ onError, myPermissions, onChanged }) {
       await api(`/roles/${id}`, { method: 'DELETE' });
       if (form.id === id) setForm(EMPTY);
       reload();
-    } catch (err) { onError(err.message); }
+    } catch (err) { onError(err); }
   }
 
   // Inactive grants stay checked: unchecking removes the grant, the chip toggle only pauses it.
@@ -52,7 +52,7 @@ export default function Roles({ onError, myPermissions, onChanged }) {
       await api(`/roles/${role._id}/permissions/${grant.permission_id}`, { method: 'PATCH', body: { isActive: !grant.isActive } });
       reload();
       onChanged();
-    } catch (err) { onError(err.message); }
+    } catch (err) { onError(err); }
   }
 
   return (

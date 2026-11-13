@@ -31,7 +31,7 @@ export default function UserPicker({ value, onChange, onError, label = 'Filter b
     if (search) params.set('q', search);
     api(`/users?${params}`)
       .then((res) => { if (!cancelled) { setUsers(res.data); setTotal(res.total); setActive(0); } })
-      .catch((err) => { if (!cancelled) onError(err.message); })
+      .catch((err) => { if (!cancelled) onError(err); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [open, search, onError]);

@@ -3,6 +3,7 @@ import { api, fmtDate, splitList } from '../api.js';
 import CategoryPicker from './CategoryPicker.jsx';
 import Modal from './Modal.jsx';
 import { ArchiveIcon, PencilIcon, PinIcon, PinOffIcon, TrashIcon, UnarchiveIcon } from './icons.jsx';
+import ErrorAlert, { FieldError, invalidProps } from './ErrorAlert.jsx';
 
 const toForm = (n) => ({
   title: n.title,
@@ -23,7 +24,7 @@ export default function NoteModal({ note: initial, canEdit, startEditing = false
   const [busy, setBusy] = useState(false);
   // null | 'delete' | 'discard-close' (close the modal) | 'discard-edit' (back to viewing)
   const [confirm, setConfirm] = useState(null);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
   const dirty = editing && !sameForm(form, toForm(note));
   const rootRef = useRef(null);
   const hadConfirm = useRef(false);
@@ -41,7 +42,7 @@ export default function NoteModal({ note: initial, canEdit, startEditing = false
   const set = (key) => (e) => setForm({ ...form, [key]: e.target.value });
 
   useEffect(() => {
-    api(`/notes/${initial._id}`).then(setNote).catch((err) => setError(err.message));
+    api(`/notes/${initial._id}`).then(setNote).catch((err) => setError(err));
   }, [initial._id]);
 
   function requestClose() {
@@ -51,7 +52,7 @@ export default function NoteModal({ note: initial, canEdit, startEditing = false
 
   function startEdit() {
     setForm(toForm(note));
-    setError('');
+    setError(null);
     setEditing(true);
   }
 
@@ -70,7 +71,7 @@ export default function NoteModal({ note: initial, canEdit, startEditing = false
   async function save(e) {
     e?.preventDefault();
     setBusy(true);
-    setError('');
+    setError(null);
     try {
       const updated = await api(`/notes/${note._id}`, {
         method: 'PATCH',
@@ -80,7 +81,7 @@ export default function NoteModal({ note: initial, canEdit, startEditing = false
       setEditing(false);
       onChanged();
     } catch (err) {
-      setError(err.message);
+      setError(err);
     } finally {
       setBusy(false);
     }
@@ -91,7 +92,7 @@ export default function NoteModal({ note: initial, canEdit, startEditing = false
       const updated = await api(`/notes/${note._id}`, { method: 'PATCH', body: { pinned: !note.pinned_at } });
       setNote(updated);
       onChanged();
-    } catch (err) { setError(err.message); }
+    } catch (err) { setError(err); }
   }
 
   async function remove() {
@@ -101,7 +102,7 @@ export default function NoteModal({ note: initial, canEdit, startEditing = false
       onChanged();
       onClose();
     } catch (err) {
-      setError(err.message);
+      setError(err);
       setBusy(false);
       setConfirm(null);
     }
@@ -168,13 +169,14 @@ export default function NoteModal({ note: initial, canEdit, startEditing = false
   return (
     <Modal title={editing ? 'Edit note' : note.title} subtitle={dates} onClose={requestClose} footer={footer} size="lg">
       <span ref={rootRef} hidden />
-      {error && <div className="alert" role="alert">{error}</div>}
+      <ErrorAlert error={error} onDismiss={() => setError(null)} />
       {editing ? (
         <form id="note-edit-form" className="form" onSubmit={save}
           onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) save(e); }}>
           <label className="field">
             Title
-            <input required autoFocus maxLength={200} value={form.title} onChange={set('title')} />
+            <input required autoFocus maxLength={200} value={form.title} onChange={set('title')} {...invalidProps(error, 'title', 'note-title-error')} />
+            <FieldError error={error} field="title" id="note-title-error" />
           </label>
           <div className="form-grid">
             <CategoryPicker value={form.category_id} categories={categories} onError={setError} onCreated={onCategoryCreated}
@@ -183,7 +185,9 @@ export default function NoteModal({ note: initial, canEdit, startEditing = false
           </div>
           <label className="field">
             Content
-            <textarea className="modal-textarea" value={form.content} onChange={set('content')} placeholder="Write something…" />
+            <textarea className="modal-textarea" value={form.content} onChange={set('content')} placeholder="Write something…"
+              {...invalidProps(error, 'content', 'note-content-error')} />
+            <FieldError error={error} field="content" id="note-content-error" />
           </label>
         </form>
       ) : (

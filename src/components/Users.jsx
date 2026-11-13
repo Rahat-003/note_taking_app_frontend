@@ -15,7 +15,7 @@ export default function Users({ onError, currentUserId, canManage }) {
 
   useEffect(() => {
     if (!canManage) return;
-    api('/roles?limit=100').then((res) => setRoles(res.data)).catch((err) => onError(err.message));
+    api('/roles?limit=100').then((res) => setRoles(res.data)).catch((err) => onError(err));
   }, [canManage, onError]);
 
   async function save(e) {
@@ -30,7 +30,7 @@ export default function Users({ onError, currentUserId, canManage }) {
       else await api('/users', { method: 'POST', body });
       setForm(EMPTY);
       reload();
-    } catch (err) { onError(err.message); }
+    } catch (err) { onError(err); }
   }
 
   async function remove(id) {
@@ -38,7 +38,7 @@ export default function Users({ onError, currentUserId, canManage }) {
       await api(`/users/${id}`, { method: 'DELETE' });
       if (form.id === id) setForm(EMPTY);
       reload();
-    } catch (err) { onError(err.message); }
+    } catch (err) { onError(err); }
   }
 
   const defaultRoleId = roles.find((r) => r.name === 'user')?._id ?? '';

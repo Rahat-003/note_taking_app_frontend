@@ -1,3 +1,5 @@
+import ErrorAlert from './ErrorAlert.jsx';
+
 // Shared frame for the sign-in and create-account pages.
 export default function AuthLayout({ title, subtitle, error, children, footer }) {
   return (
@@ -9,7 +11,7 @@ export default function AuthLayout({ title, subtitle, error, children, footer })
             <h1>{title}</h1>
             <p>{subtitle}</p>
           </div>
-          {error && <div className="alert" role="alert">{error}</div>}
+          <ErrorAlert error={error} />
           {children}
         </section>
         <p className="auth-footer">{footer}</p>
