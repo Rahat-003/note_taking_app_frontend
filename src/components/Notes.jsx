@@ -2,7 +2,7 @@ import { Fragment, useCallback, useState } from 'react';
 import { api, fmtDate, splitList } from '../api.js';
 import { useList, usePaginated } from '../hooks.js';
 import CategoryPicker from './CategoryPicker.jsx';
-import { ArchiveIcon, PinIcon, PinOffIcon, UnarchiveIcon } from './icons.jsx';
+import { ArchiveIcon, PinIcon, PinOffIcon, TrashIcon, UnarchiveIcon } from './icons.jsx';
 import NoteFilters, { NO_FILTERS, isFiltered, useNotesQuery } from './NoteFilters.jsx';
 import NoteModal from './NoteModal.jsx';
 import Toast from './Toast.jsx';
@@ -45,6 +45,38 @@ function ArchiveButton({ note, onArchive }) {
       onClick={() => onArchive(note, !note.isArchived)}>
       {note.isArchived ? <><UnarchiveIcon />Unarchive</> : <><ArchiveIcon />Archive</>}
     </button>
+  );
+}
+
+/** Delete with an inline confirmation: the first click asks, the second deletes. */
+function DeleteButton({ note, onDeleted, onError }) {
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  async function remove() {
+    setBusy(true);
+    try {
+      await api(`/notes/${note._id}`, { method: 'DELETE' });
+      onDeleted();
+    } catch (err) {
+      onError(err.message);
+      setBusy(false);
+      setConfirming(false);
+    }
+  }
+
+  if (!confirming) {
+    return (
+      <button type="button" className="btn btn-sm btn-danger btn-with-icon" title="Delete this note" onClick={() => setConfirming(true)}>
+        <TrashIcon />Delete
+      </button>
+    );
+  }
+  return (
+    <>
+      <button type="button" className="btn btn-sm btn-danger-solid" disabled={busy} onClick={remove} autoFocus>Confirm delete</button>
+      <button type="button" className="btn btn-sm" disabled={busy} onClick={() => setConfirming(false)}>Cancel</button>
+    </>
   );
 }
 
@@ -207,6 +239,7 @@ export function MyNotes({ onError }) {
                       {!n.isArchived && <PinButton note={n} onPin={pin} />}
                       <button className="btn btn-sm" onClick={() => setOpen({ note: n, editing: true })}>Edit</button>
                       <ArchiveButton note={n} onArchive={setArchived} />
+                      <DeleteButton note={n} onDeleted={onModalChanged} onError={onError} />
                     </div>
                   </td>
                 </tr>

@@ -12,11 +12,14 @@ export function usePaginated(path, onError, limit = 10) {
   const reload = useCallback(async () => {
     try {
       const sep = path.includes('?') ? '&' : '?';
-      setResult(await api(`${path}${sep}page=${page}&limit=${limit}`));
+      const res = await api(`${path}${sep}page=${page}&limit=${limit}`);
+      // The page emptied (e.g. its last item was deleted): step back to the new last page.
+      if (!res.data.length && page > 1) return setPage(Math.max(1, res.totalPages));
+      setResult(res);
     } catch (err) {
       onError(err.message);
     }
-  }, [path, page, limit, onError]);
+  }, [path, page, limit, onError, setPage]);
 
   useEffect(() => { reload(); }, [reload]);
 

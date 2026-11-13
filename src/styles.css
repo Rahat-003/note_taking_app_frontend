@@ -183,8 +183,15 @@ tbody tr:hover td { background: var(--surface-2); }
 .empty { text-align: center; color: var(--muted); padding: 28px 12px; }
 
 /* ---------- pager ---------- */
-.pager { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--muted); font-size: .85rem; }
-.pager-buttons { display: flex; gap: 6px; }
+.pager { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; color: var(--muted); font-size: .85rem; }
+.pager-pages { display: flex; align-items: center; justify-content: center; gap: 4px; flex-wrap: wrap; }
+.pager-page { min-width: 32px; justify-content: center; }
+.pager-page:disabled { opacity: 1; cursor: default; }
+.pager-gap { padding: 0 4px; }
+.pager-buttons { display: flex; gap: 6px; justify-content: flex-end; }
+@media (max-width: 640px) {
+  .pager { grid-template-columns: 1fr; justify-items: center; }
+}
 
 /* ---------- badges & chips ---------- */
 .badge {
