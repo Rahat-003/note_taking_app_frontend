@@ -3,6 +3,7 @@ import { api, getToken, setToken, setUnauthorizedHandler } from './api.js';
 import LoginPage from './components/LoginPage.jsx';
 import RegisterPage from './components/RegisterPage.jsx';
 import { MyNotes, AllNotes, ArchivedNotes } from './components/Notes.jsx';
+import Posts from './components/Posts.jsx';
 import Profile from './components/Profile.jsx';
 import Users from './components/Users.jsx';
 import Interests from './components/Interests.jsx';
@@ -16,6 +17,7 @@ const AUTH_PAGES = ['/login', '/register'];
 const TABS = [
   { id: 'notes', label: 'My notes', perms: ['notes.manage_own'] },
   { id: 'archive', label: 'Archive', perms: ['notes.manage_own'] },
+  { id: 'posts', label: 'Posts', perms: [] },
   { id: 'profile', label: 'Profile', perms: [] },
   { id: 'all-notes', label: 'All notes', perms: ['notes.read_all'] },
   { id: 'users', label: 'Users', perms: ['users.read', 'users.manage'] },
@@ -108,6 +110,9 @@ export default function App() {
 
         {current === 'notes' && <MyNotes onError={onError} />}
         {current === 'archive' && <ArchivedNotes onError={onError} />}
+        {current === 'posts' && (
+          <Posts me={user} canCreate={can('posts.create')} canPickUser={can('users.read')} onError={onError} />
+        )}
         {current === 'profile' && (
           <Profile user={user} onUpdated={(u) => setSession({ ...session, user: u })} onError={onError} />
         )}

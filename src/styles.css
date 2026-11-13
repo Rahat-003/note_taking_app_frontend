@@ -676,3 +676,12 @@ h2.with-icon svg { color: var(--primary); }
 .switch input:checked + .switch-track .switch-thumb { transform: translateX(18px); }
 .switch input:focus-visible + .switch-track { box-shadow: 0 0 0 3px var(--primary-soft); }
 @media (prefers-reduced-motion: reduce) { .switch-track, .switch-thumb { transition: none; } }
+
+/* ---------- posts (components/Posts.jsx) ---------- */
+.posts-author { display: flex; align-items: center; gap: 8px; min-width: 220px; }
+.posts-author > .user-picker { flex: 1; }
+.post-list { display: grid; gap: 12px; }
+.post { padding: 14px 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); display: grid; gap: 4px; }
+.post-title { margin: 0; font-size: 1.05rem; }
+.post-meta { color: var(--muted); font-size: .8rem; }
+.post-body { margin: 6px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.55; }
