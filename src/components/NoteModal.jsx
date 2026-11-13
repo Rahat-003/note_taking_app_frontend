@@ -110,7 +110,6 @@ export default function NoteModal({ note: initial, canEdit, startEditing = false
   const dates = (
     <>
       Created {fmtDate(note.createdAt)}
-      {note.updatedAt !== note.createdAt && <> · Edited {fmtDate(note.updatedAt)}</>}
       {note.user && !canEdit && <> · by {note.user.name}</>}
     </>
   );

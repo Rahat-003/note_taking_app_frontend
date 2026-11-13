@@ -125,7 +125,6 @@ function Dates({ note }) {
   return (
     <td className="cell-muted">
       <div>{fmtDate(note.createdAt)}</div>
-      {note.updatedAt !== note.createdAt && <div className="cell-sub">edited {fmtDate(note.updatedAt)}</div>}
     </td>
   );
 }
@@ -188,7 +187,7 @@ export function MyNotes({ onError }) {
         </div>
         <NoteFilters filters={filters} onChange={setFilters} categories={myCategories.items} tags={myTags.items} />
         <div className="table-wrap">
-          <table>
+          <table className="notes-table">
             <thead><tr><th>Title</th><th>Category</th><th>Content</th><th>Created</th><th></th></tr></thead>
             <tbody>
               {result?.data.length === 0 && (
@@ -244,7 +243,7 @@ export function AllNotes({ onError, currentUserId }) {
       </div>
       <NoteFilters filters={filters} onChange={setFilters} categories={categories.items} tags={tags.items} defaults={ALL_NOTES_DEFAULTS} />
       <div className="table-wrap">
-        <table>
+        <table className="notes-table">
           <thead><tr><th>Title</th><th>Category</th><th>Content</th><th>Owner</th><th>Created</th></tr></thead>
           <tbody>
             {result?.data.length === 0 && <EmptyRow colSpan={5}>{emptyMessage(filters, ALL_NOTES_DEFAULTS, 'No notes yet.')}</EmptyRow>}
