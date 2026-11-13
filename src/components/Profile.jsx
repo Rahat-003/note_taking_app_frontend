@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { api } from '../api.js';
+import { api, fmtDay } from '../api.js';
 import ErrorAlert, { FieldError, invalidProps } from './ErrorAlert.jsx';
 import { CheckIcon, EyeIcon, EyeOffIcon, LockIcon, UserIcon, XIcon } from './icons.jsx';
 
 const BIO_MAX = 500;
 const INTERESTS_MAX = 20;
 
-const memberSince = (date) => (date ? new Date(date).toLocaleDateString(undefined, { year: 'numeric', month: 'long' }) : null);
+const memberSince = (date) => (date ? fmtDay(date) : null);
 
 export default function Profile({ user, onUpdated }) {
   return (

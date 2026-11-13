@@ -5,7 +5,7 @@ export default function AuthLayout({ title, subtitle, error, children, footer })
   return (
     <div className="auth">
       <div className="auth-inner">
-        <div className="auth-brand"><span className="brand-mark">SN</span>Secure Notes</div>
+        <div className="auth-brand"><span className="brand-mark">NT</span>Note Taking App</div>
         <section className="card auth-card">
           <div className="auth-title">
             <h1>{title}</h1>

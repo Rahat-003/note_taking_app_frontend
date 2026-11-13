@@ -86,7 +86,7 @@ export default function App() {
     <>
       <header className="topbar">
         <div className="topbar-inner">
-          <span className="brand"><span className="brand-mark">SN</span>Secure Notes</span>
+          <span className="brand"><span className="brand-mark">NT</span>Note Taking App</span>
           <div className="user">
             <strong>{user.name}</strong>
             <span className={`badge ${roleName === 'admin' ? 'badge-admin' : ''}`}>{roleName}</span>

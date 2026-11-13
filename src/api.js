@@ -53,4 +53,19 @@ export async function api(path, { method = 'GET', body } = {}) {
 }
 
 export const splitList = (s) => (s || '').split(',').map((x) => x.trim()).filter(Boolean);
-export const fmtDate = (d) => new Date(d).toLocaleString();
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const pad = (n) => String(n).padStart(2, '0');
+
+/** "12 Nov 2026" in local time, the same on every browser and locale. */
+export function fmtDay(d) {
+  const date = new Date(d);
+  if (Number.isNaN(date.getTime())) return '';
+  return `${pad(date.getDate())} ${MONTHS[date.getMonth()]} ${date.getFullYear()}`;
+}
+
+/** "12 Nov 2026, 14:05:09": every date the app shows, in local time with a 24-hour clock. */
+export function fmtDate(d) {
+  const date = new Date(d);
+  if (Number.isNaN(date.getTime())) return '';
+  return `${fmtDay(date)}, ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}

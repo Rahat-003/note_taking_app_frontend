@@ -1,7 +1,7 @@
 {
   "name": "secure-notes-frontend",
   "version": "1.0.0",
-  "description": "React client for the Secure Notes API",
+  "description": "React client for the Note Taking App API",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

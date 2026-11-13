@@ -6,7 +6,7 @@ import { CheckIcon, ChevronDownIcon, SearchIcon, UserIcon } from './icons.jsx';
 const LIMIT = 8;
 
 /**
- * Searchable user dropdown: a button that opens a search box over GET /api/users?q= (name or email).
+ * Searchable user dropdown: a button that opens a search box over GET /api/users?q= (email prefix).
  * value: the selected user ({ _id, name, email }) or null for "Any user"; onChange gets the same.
  * Keyboard in the search box: arrows move, Enter picks, Escape closes.
  */
@@ -84,7 +84,7 @@ export default function UserPicker({ value, onChange, onError, label = 'Filter b
         <div className="dropdown-menu user-picker-menu" role="dialog" aria-label={label}>
           <label className="input-icon user-picker-search">
             <SearchIcon />
-            <input type="search" autoFocus placeholder="Search name or email…" value={query} role="combobox"
+            <input type="search" autoFocus placeholder="Search by email…" value={query} role="combobox"
               aria-label="Search users" aria-expanded="true" aria-controls={`${id}-listbox`} aria-autocomplete="list"
               aria-activedescendant={optionId(active)} onChange={(e) => setQuery(e.target.value)} onKeyDown={onKeyDown} />
           </label>
