@@ -1,4 +1,7 @@
 const TOKEN_KEY = 'token';
+// Where the API lives. Empty (Docker / `npm run dev`): same origin, /api is proxied to the backend.
+// On Vercel: the backend's URL, set as VITE_API_URL when the frontend is built (e.g. https://notes-api.vercel.app).
+const API_BASE = (import.meta.env.VITE_API_URL ?? '').replace(/\/+$/, '');
 let onUnauthorized = () => {};
 
 export const getToken = () => localStorage.getItem(TOKEN_KEY);
@@ -31,7 +34,7 @@ export async function api(path, { method = 'GET', body } = {}) {
 
   let res;
   try {
-    res = await fetch(`/api${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    res = await fetch(`${API_BASE}/api${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
   } catch {
     throw new ApiError('The server could not be reached. Check your connection and try again.', { code: 'NETWORK' });
   }
