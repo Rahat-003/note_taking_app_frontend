@@ -678,10 +678,21 @@ h2.with-icon svg { color: var(--primary); }
 @media (prefers-reduced-motion: reduce) { .switch-track, .switch-thumb { transition: none; } }
 
 /* ---------- posts (components/Posts.jsx) ---------- */
-.posts-author { display: flex; align-items: center; gap: 8px; min-width: 220px; }
-.posts-author > .user-picker { flex: 1; }
+.posts-author { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.segmented { display: inline-flex; border: 1px solid var(--border); border-radius: 10px; padding: 2px; background: var(--surface-2); }
+.segmented > .btn { border: 0; background: transparent; }
+.segmented > .btn[aria-pressed="true"] { background: var(--surface); color: var(--primary); box-shadow: var(--shadow); }
+.post-author { font: inherit; color: var(--primary); background: none; border: 0; padding: 0; cursor: pointer; font-weight: 600; }
+.post-author:hover, .post-author:focus-visible { text-decoration: underline; }
+.posts-author > .user-picker { flex: 1 1 200px; }
 .post-list { display: grid; gap: 12px; }
 .post { padding: 14px 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); display: grid; gap: 4px; }
 .post-title { margin: 0; font-size: 1.05rem; }
 .post-meta { color: var(--muted); font-size: .8rem; }
 .post-body { margin: 6px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.55; }
+
+.post { position: relative; }
+.post-actions { position: absolute; top: 12px; right: 12px; display: flex; gap: 6px; }
+.post:has(.post-actions) .post-title { padding-right: 150px; }
+.post-edit { margin-bottom: 8px; }
+.post:has(.post-edit) > .post-title, .post:has(.post-edit) > .post-body { display: none; }

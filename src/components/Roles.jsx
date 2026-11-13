@@ -4,7 +4,7 @@ import ErrorAlert, { FieldError, invalidProps } from './ErrorAlert.jsx';
 import { CheckIcon, LockIcon, ShieldIcon } from './icons.jsx';
 
 // Permission keys are "<area>.<action>"; the editor groups them by area.
-const AREAS = { notes: 'Notes', users: 'Users', roles: 'Roles' };
+const AREAS = { notes: 'Notes', posts: 'Posts', users: 'Users', roles: 'Roles' };
 const areaOf = (key) => key.split('.')[0];
 
 const NEW = 'new';

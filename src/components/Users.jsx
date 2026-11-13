@@ -11,6 +11,7 @@ export default function Users({ onError, currentUserId, canManage }) {
   const { result, setPage, reload } = usePaginated('/users', onError);
   const [roles, setRoles] = useState([]);
   const [form, setForm] = useState(EMPTY);
+  const [confirmDelete, setConfirmDelete] = useState(null); // id of the user whose removal awaits confirmation
   const set = (key) => (e) => setForm({ ...form, [key]: e.target.value });
 
   useEffect(() => {
@@ -29,6 +30,16 @@ export default function Users({ onError, currentUserId, canManage }) {
       if (form.id) await api(`/users/${form.id}`, { method: 'PATCH', body });
       else await api('/users', { method: 'POST', body });
       setForm(EMPTY);
+      reload();
+    } catch (err) { onError(err); }
+  }
+
+  // Removes the user with their notes, posts and label counts; it can't be undone, so it asks first.
+  async function remove(user) {
+    try {
+      await api(`/users/${user._id}`, { method: 'DELETE' });
+      setConfirmDelete(null);
+      if (form.id === user._id) setForm(EMPTY);
       reload();
     } catch (err) { onError(err); }
   }
@@ -111,6 +122,14 @@ export default function Users({ onError, currentUserId, canManage }) {
                             <button className="btn btn-sm btn-warning" title="Signs the user out on their next request and blocks sign-in"
                               onClick={() => setActive(u, false)}>Deactivate</button>
                           )}
+                          {confirmDelete !== u._id
+                            ? <button className="btn btn-sm btn-danger" title="Removes the user with their notes and posts" onClick={() => setConfirmDelete(u._id)}>Remove</button>
+                            : (
+                              <>
+                                <button className="btn btn-sm btn-danger-solid" autoFocus onClick={() => remove(u)}>Confirm remove</button>
+                                <button className="btn btn-sm" onClick={() => setConfirmDelete(null)}>Cancel</button>
+                              </>
+                            )}
                         </>
                       )}
                     </div>
