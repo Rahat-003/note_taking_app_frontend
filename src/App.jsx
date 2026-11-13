@@ -2,8 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { api, getToken, setToken, setUnauthorizedHandler } from './api.js';
 import LoginPage from './components/LoginPage.jsx';
 import RegisterPage from './components/RegisterPage.jsx';
-import { MyNotes, AllNotes } from './components/Notes.jsx';
-import Posts from './components/Posts.jsx';
+import { MyNotes, AllNotes, ArchivedNotes } from './components/Notes.jsx';
 import Profile from './components/Profile.jsx';
 import Users from './components/Users.jsx';
 import Interests from './components/Interests.jsx';
@@ -15,7 +14,7 @@ const AUTH_PAGES = ['/login', '/register'];
 // A tab is shown when the user holds any of its permissions (empty list = everyone).
 const TABS = [
   { id: 'notes', label: 'My notes', perms: ['notes.manage_own'] },
-  { id: 'posts', label: 'Posts', perms: [] },
+  { id: 'archive', label: 'Archive', perms: ['notes.manage_own'] },
   { id: 'profile', label: 'Profile', perms: [] },
   { id: 'all-notes', label: 'All notes', perms: ['notes.read_all'] },
   { id: 'users', label: 'Users', perms: ['users.read', 'users.manage'] },
@@ -28,14 +27,12 @@ export default function App() {
   const [loading, setLoading] = useState(Boolean(getToken()));
   const [tab, setTab] = useState(null);
   const [error, setError] = useState('');
-  const [postsUser, setPostsUser] = useState(null);
   const path = usePath();
 
   const logout = useCallback(() => {
     setToken(null);
     setSession(null);
     setTab(null);
-    setPostsUser(null);
     navigate('/login');
   }, []);
 
@@ -67,11 +64,6 @@ export default function App() {
   function selectTab(id) {
     setError('');
     setTab(id);
-  }
-
-  function viewPosts(userId) {
-    setPostsUser(userId);
-    selectTab('posts');
   }
 
   if (loading) return <div className="loading">Loading…</div>;
@@ -112,15 +104,13 @@ export default function App() {
         )}
 
         {current === 'notes' && <MyNotes onError={onError} />}
-        {current === 'posts' && (
-          <Posts onError={onError} canCreate={can('posts.create')} selectedUser={postsUser} onSelectUser={setPostsUser} />
-        )}
+        {current === 'archive' && <ArchivedNotes onError={onError} />}
         {current === 'profile' && (
           <Profile user={user} onUpdated={(u) => setSession({ ...session, user: u })} onError={onError} />
         )}
         {current === 'all-notes' && <AllNotes onError={onError} currentUserId={user._id} />}
         {current === 'users' && (
-          <Users onError={onError} onViewPosts={viewPosts} currentUserId={user._id} canManage={can('users.manage')} />
+          <Users onError={onError} currentUserId={user._id} canManage={can('users.manage')} />
         )}
         {current === 'interests' && <Interests onError={onError} />}
         {current === 'roles' && <Roles onError={onError} myPermissions={permissions} onChanged={refreshSession} />}

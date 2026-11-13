@@ -306,3 +306,59 @@ export function AllNotes({ onError, currentUserId }) {
     </section>
   );
 }
+
+/** The archive: the user's archived notes, most recently archived first (by archivedAt). */
+export function ArchivedNotes({ onError }) {
+  const { result, setPage, reload } = usePaginated('/notes?isArchived=true&sort=archivedAt&order=desc', onError);
+  const categories = useList('/categories', onError);
+  const [open, setOpen] = useState(null); // { note, editing } shown in the modal
+  const { setArchived, toastElement } = useArchiving(reload, onError);
+
+  return (
+    <>
+      <section className="card">
+        <div className="card-header">
+          <h2>Archive</h2>
+          <span className="card-subtitle">
+            Most recently archived first{result ? ` · ${result.total} ${result.total === 1 ? 'note' : 'notes'}` : ''}
+          </span>
+        </div>
+        <div className="table-wrap">
+          <table className="notes-table">
+            <thead><tr><th>Title</th><th>Category</th><th>Content</th><th>Archived</th><th></th></tr></thead>
+            <tbody>
+              {result?.data.length === 0 && <EmptyRow colSpan={5}>No archived notes.</EmptyRow>}
+              {result?.data.map((n) => (
+                <tr key={n._id} className="row-clickable" onClick={openFromRow(() => setOpen({ note: n, editing: false }))}>
+                  <td>
+                    <button type="button" className="note-title" onClick={() => setOpen({ note: n, editing: false })}>{n.title}</button>
+                    {n.tags?.length > 0 && (
+                      <div className="note-meta">{n.tags.map((t) => <span key={t._id} className="chip">#{t.name}</span>)}</div>
+                    )}
+                  </td>
+                  <td>{n.category ? <span className="badge badge-category">{n.category.name}</span> : <span className="cell-muted">—</span>}</td>
+                  <td><div className="clamp">{n.content}</div></td>
+                  <td className="cell-muted">{n.archivedAt ? fmtDate(n.archivedAt) : '—'}</td>
+                  <td>
+                    <div className="row-actions">
+                      <ArchiveButton note={n} onArchive={setArchived} />
+                      <DeleteButton note={n} onDeleted={reload} onError={onError} />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <Pager result={result} setPage={setPage} />
+      </section>
+
+      {open && (
+        <NoteModal key={open.note._id} note={open.note} canEdit startEditing={open.editing} categories={categories.items}
+          onCategoryCreated={categories.reload} onChanged={reload} onArchive={setArchived}
+          onClose={() => setOpen(null)} onError={onError} />
+      )}
+      {toastElement}
+    </>
+  );
+}

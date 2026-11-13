@@ -7,7 +7,7 @@ import Pager, { EmptyRow } from './Pager.jsx';
 
 const EMPTY = { id: '', name: '', email: '', password: '', role: '', interests: '' };
 
-export default function Users({ onError, onViewPosts, currentUserId, canManage }) {
+export default function Users({ onError, currentUserId, canManage }) {
   const { result, setPage, reload } = usePaginated('/users', onError);
   const [roles, setRoles] = useState([]);
   const [form, setForm] = useState(EMPTY);
@@ -97,7 +97,6 @@ export default function Users({ onError, onViewPosts, currentUserId, canManage }
                   </td>
                   <td>
                     <div className="row-actions">
-                      <button className="btn btn-sm" onClick={() => onViewPosts(u._id)}>Posts</button>
                       {canManage && u._id !== currentUserId && (
                         <>
                           <button className="btn btn-sm" onClick={() => edit(u)}>Edit</button>
