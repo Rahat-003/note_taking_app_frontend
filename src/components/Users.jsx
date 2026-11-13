@@ -11,6 +11,7 @@ export default function Users({ onError, currentUserId, canManage }) {
   const { result, setPage, reload } = usePaginated('/users', onError);
   const [roles, setRoles] = useState([]);
   const [form, setForm] = useState(EMPTY);
+  const [confirmOff, setConfirmOff] = useState(null); // id of the user whose deactivation awaits confirmation
   const set = (key) => (e) => setForm({ ...form, [key]: e.target.value });
 
   useEffect(() => {
@@ -29,6 +30,14 @@ export default function Users({ onError, currentUserId, canManage }) {
       if (form.id) await api(`/users/${form.id}`, { method: 'PATCH', body });
       else await api('/users', { method: 'POST', body });
       setForm(EMPTY);
+      reload();
+    } catch (err) { onError(err); }
+  }
+
+  async function setActive(user, isActive) {
+    try {
+      await api(`/users/${user._id}/status`, { method: 'PATCH', body: { isActive } });
+      setConfirmOff(null);
       reload();
     } catch (err) { onError(err); }
   }
@@ -80,17 +89,22 @@ export default function Users({ onError, currentUserId, canManage }) {
         </div>
         <div className="table-wrap">
           <table>
-            <thead><tr><th>Name</th><th>Role</th><th>Interests</th><th></th></tr></thead>
+            <thead><tr><th>Name</th><th>Role</th><th>Status</th><th>Interests</th><th></th></tr></thead>
             <tbody>
-              {result?.data.length === 0 && <EmptyRow colSpan={4}>No users.</EmptyRow>}
+              {result?.data.length === 0 && <EmptyRow colSpan={5}>No users.</EmptyRow>}
               {result?.data.map((u) => (
-                <tr key={u._id}>
+                <tr key={u._id} className={u.isActive === false ? 'row-muted' : ''}>
                   <td>
                     <div className="cell-title">{u.name}</div>
                     <div className="cell-muted">{u.email}</div>
                   </td>
                   <td>
                     <span className={`badge ${u.role?.name === 'admin' ? 'badge-admin' : ''}`}>{u.role?.name ?? 'none'}</span>
+                  </td>
+                  <td>
+                    {u.isActive === false
+                      ? <span className="badge badge-inactive"><span className="dot dot-off" />Deactivated</span>
+                      : <span className="badge badge-active"><span className="dot dot-on" />Active</span>}
                   </td>
                   <td>
                     <div className="chips">{(u.interests || []).map((i) => <span key={i} className="chip">{i}</span>)}</div>
@@ -100,6 +114,19 @@ export default function Users({ onError, currentUserId, canManage }) {
                       {canManage && u._id !== currentUserId && (
                         <>
                           <button className="btn btn-sm" onClick={() => edit(u)}>Edit</button>
+                          {u.isActive === false && (
+                            <button className="btn btn-sm btn-success" onClick={() => setActive(u, true)}>Activate</button>
+                          )}
+                          {u.isActive !== false && confirmOff !== u._id && (
+                            <button className="btn btn-sm btn-warning" title="Signs the user out on their next request and blocks sign-in"
+                              onClick={() => setConfirmOff(u._id)}>Deactivate</button>
+                          )}
+                          {confirmOff === u._id && (
+                            <>
+                              <button className="btn btn-sm btn-danger-solid" autoFocus onClick={() => setActive(u, false)}>Confirm deactivate</button>
+                              <button className="btn btn-sm" onClick={() => setConfirmOff(null)}>Cancel</button>
+                            </>
+                          )}
                           <button className="btn btn-sm btn-danger" onClick={() => remove(u._id)}>Delete</button>
                         </>
                       )}

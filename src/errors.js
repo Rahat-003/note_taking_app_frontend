@@ -45,6 +45,8 @@ const KINDS = {
   VALIDATION_FAILED: { tone: 'danger', icon: 'alert', title: 'Please check your input' },
   BAD_REQUEST: { tone: 'danger', icon: 'alert', title: 'That request was not accepted' },
   UNAUTHORIZED: { tone: 'danger', icon: 'lock', title: 'Sign-in needed' },
+  TOKEN_EXPIRED: { tone: 'info', icon: 'clock', title: 'Session expired' },
+  ACCOUNT_DISABLED: { tone: 'danger', icon: 'lock', title: 'Account deactivated' },
   NOT_FOUND: { tone: 'info', icon: 'search', title: 'Not found' },
   CONFLICT: { tone: 'warning', icon: 'alert', title: 'Already exists' },
   RATE_LIMITED: { tone: 'warning', icon: 'clock', title: 'Too many attempts' },

@@ -4,15 +4,18 @@ import { Link } from '../router.jsx';
 import AuthLayout from './AuthLayout.jsx';
 import { FieldError, invalidProps } from './ErrorAlert.jsx';
 
-export default function LoginPage({ onAuth }) {
+/** notice: why the previous session ended (expired token, deactivated account), shown until the next attempt. */
+export default function LoginPage({ onAuth, notice = null }) {
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [tried, setTried] = useState(false);
   const set = (key) => (e) => setForm({ ...form, [key]: e.target.value });
 
   async function submit(e) {
     e.preventDefault();
     setBusy(true);
+    setTried(true);
     setError(null);
     try {
       onAuth(await api('/auth/login', { method: 'POST', body: form }));
@@ -26,7 +29,7 @@ export default function LoginPage({ onAuth }) {
     <AuthLayout
       title="Sign in"
       subtitle="Welcome back. Sign in to your notes."
-      error={error}
+      error={error ?? (tried ? null : notice)}
       footer={<>Don&apos;t have an account? <Link to="/register">Create one</Link></>}
     >
       <form className="form" onSubmit={submit}>

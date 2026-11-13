@@ -28,9 +28,13 @@ export default function App() {
   const [loading, setLoading] = useState(Boolean(getToken()));
   const [tab, setTab] = useState(null);
   const [error, setError] = useState(null); // ApiError | string, shown as a floating callout
+  const [signedOutBecause, setSignedOutBecause] = useState(null); // why the session ended, shown on the sign-in page
   const path = usePath();
 
-  const logout = useCallback(() => {
+  // reason: the ApiError that ended the session (expired token, deactivated account); none for "Log out".
+  const logout = useCallback((reason) => {
+    setSignedOutBecause(reason instanceof Error ? reason : null);
+    setError(null);
     setToken(null);
     setSession(null);
     setTab(null);
@@ -67,6 +71,7 @@ export default function App() {
     setToken(token);
     setSession({ user, permissions });
     setError(null);
+    setSignedOutBecause(null);
   }
 
   function selectTab(id) {
@@ -75,7 +80,7 @@ export default function App() {
   }
 
   if (loading) return <div className="loading">Loading…</div>;
-  if (!session) return path === '/register' ? <RegisterPage onAuth={onAuth} /> : <LoginPage onAuth={onAuth} />;
+  if (!session) return path === '/register' ? <RegisterPage onAuth={onAuth} /> : <LoginPage onAuth={onAuth} notice={signedOutBecause} />;
 
   const { user, permissions } = session;
   const can = (p) => permissions.includes(p);

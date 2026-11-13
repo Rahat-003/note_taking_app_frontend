@@ -4,6 +4,7 @@ let onUnauthorized = () => {};
 export const getToken = () => localStorage.getItem(TOKEN_KEY);
 export const setToken = (token) =>
   token ? localStorage.setItem(TOKEN_KEY, token) : localStorage.removeItem(TOKEN_KEY);
+/** fn(error) runs when a signed-in request gets 401; error.code says why (TOKEN_EXPIRED, ACCOUNT_DISABLED, ...). */
 export const setUnauthorizedHandler = (fn) => { onUnauthorized = fn; };
 
 /**
@@ -34,17 +35,19 @@ export async function api(path, { method = 'GET', body } = {}) {
   } catch {
     throw new ApiError('The server could not be reached. Check your connection and try again.', { code: 'NETWORK' });
   }
-  if (res.status === 401 && token) onUnauthorized();
   if (res.status === 204) return null;
 
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new ApiError(data.error || res.statusText || 'Request failed', {
+    const error = new ApiError(data.error || res.statusText || 'Request failed', {
       status: res.status,
       code: data.code || STATUS_CODES[res.status] || (res.status >= 500 ? 'INTERNAL' : 'ERROR'),
       permission: data.permission,
       fields: Array.isArray(data.fields) ? data.fields : [],
     });
+    // A signed-in request refused with 401: the session is over (expired token, deactivated or deleted account).
+    if (res.status === 401 && token) onUnauthorized(error);
+    throw error;
   }
   return data;
 }
