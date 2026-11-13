@@ -60,12 +60,6 @@ export default function App() {
 
   const onError = useCallback((err) => setError(err), []);
 
-  // Errors float over the page (so they are seen wherever the action was) and fade after a while.
-  useEffect(() => {
-    if (!error) return undefined;
-    const timer = setTimeout(() => setError(null), error.fields?.length ? 15000 : 9000);
-    return () => clearTimeout(timer);
-  }, [error]);
 
   function onAuth({ token, user, permissions }) {
     setToken(token);
@@ -109,7 +103,8 @@ export default function App() {
       </header>
 
       <main className="container">
-        {error && <ErrorAlert className="app-error" error={error} onDismiss={() => setError(null)} />}
+        {error && // Floats over the page, so it is seen wherever the action was; dismisses itself (paused on hover).
+          <ErrorAlert className="app-error" error={error} onDismiss={() => setError(null)} autoDismissMs={error.fields?.length ? 15000 : 8000} />}
 
         {current === 'notes' && <MyNotes onError={onError} />}
         {current === 'archive' && <ArchivedNotes onError={onError} />}

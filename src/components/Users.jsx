@@ -11,7 +11,6 @@ export default function Users({ onError, currentUserId, canManage }) {
   const { result, setPage, reload } = usePaginated('/users', onError);
   const [roles, setRoles] = useState([]);
   const [form, setForm] = useState(EMPTY);
-  const [confirmOff, setConfirmOff] = useState(null); // id of the user whose deactivation awaits confirmation
   const set = (key) => (e) => setForm({ ...form, [key]: e.target.value });
 
   useEffect(() => {
@@ -37,15 +36,6 @@ export default function Users({ onError, currentUserId, canManage }) {
   async function setActive(user, isActive) {
     try {
       await api(`/users/${user._id}/status`, { method: 'PATCH', body: { isActive } });
-      setConfirmOff(null);
-      reload();
-    } catch (err) { onError(err); }
-  }
-
-  async function remove(id) {
-    try {
-      await api(`/users/${id}`, { method: 'DELETE' });
-      if (form.id === id) setForm(EMPTY);
       reload();
     } catch (err) { onError(err); }
   }
@@ -95,7 +85,7 @@ export default function Users({ onError, currentUserId, canManage }) {
               {result?.data.map((u) => (
                 <tr key={u._id} className={u.isActive === false ? 'row-muted' : ''}>
                   <td>
-                    <div className="cell-title">{u.name}</div>
+                    <div className="cell-title">{u.name} {u._id === currentUserId && <span className="badge">you</span>}</div>
                     <div className="cell-muted">{u.email}</div>
                   </td>
                   <td>
@@ -117,17 +107,10 @@ export default function Users({ onError, currentUserId, canManage }) {
                           {u.isActive === false && (
                             <button className="btn btn-sm btn-success" onClick={() => setActive(u, true)}>Activate</button>
                           )}
-                          {u.isActive !== false && confirmOff !== u._id && (
+                          {u.isActive !== false && (
                             <button className="btn btn-sm btn-warning" title="Signs the user out on their next request and blocks sign-in"
-                              onClick={() => setConfirmOff(u._id)}>Deactivate</button>
+                              onClick={() => setActive(u, false)}>Deactivate</button>
                           )}
-                          {confirmOff === u._id && (
-                            <>
-                              <button className="btn btn-sm btn-danger-solid" autoFocus onClick={() => setActive(u, false)}>Confirm deactivate</button>
-                              <button className="btn btn-sm" onClick={() => setConfirmOff(null)}>Cancel</button>
-                            </>
-                          )}
-                          <button className="btn btn-sm btn-danger" onClick={() => remove(u._id)}>Delete</button>
                         </>
                       )}
                     </div>
